@@ -1,0 +1,6 @@
+.kif-settings .kif-color-preview{display:inline-block;width:28px;height:28px;border-radius:6px;vertical-align:middle;margin-left:8px;border:1px solid rgba(0,0,0,.1)}
+.kif-grid-preview{display:grid;grid-template-columns:repeat(4,16px);gap:6px;margin-left:12px;vertical-align:middle}
+.kif-grid-preview span{width:16px;height:12px;background:#ddd;border-radius:3px;display:block}
+.kif-grid-preview[data-cols="2"]{grid-template-columns:repeat(2,16px)}
+.kif-grid-preview[data-cols="3"]{grid-template-columns:repeat(3,16px)}
+.kif-grid-preview[data-cols="4"]{grid-template-columns:repeat(4,16px)}
