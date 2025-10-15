@@ -19,6 +19,7 @@ function kif_event_meta_cb($post){
     $lineup= get_post_meta($post->ID,'_kif_lineup',true);
     $heads = get_post_meta($post->ID,'_kif_headliners',true);
     $mode  = get_post_meta($post->ID,'_kif_lineup_mode',true);
+    $event_mode = get_post_meta($post->ID,'_kif_event_mode',true);
     $tt    = get_post_meta($post->ID,'_kif_timetable',true);
     wp_nonce_field('kif_event_save','kif_event_nonce'); ?>
     <style>
@@ -44,6 +45,22 @@ function kif_event_meta_cb($post){
       </p>
       <p class="full"><label>Headlinerzy (przecinki)</label>
         <input type="text" name="kif_headliners" value="<?php echo esc_attr($heads); ?>" style="width:100%">
+      </p>
+      <p><label>Tryb imprezy</label>
+        <select name="kif_event_mode" style="width:100%">
+          <?php
+          $event_modes = [
+            '' => '— wybierz —',
+            'Koncert' => 'Koncert',
+            'Festiwal' => 'Festiwal',
+            'Impreza klubowa' => 'Impreza klubowa',
+            'Halówka' => 'Halówka',
+          ];
+          foreach($event_modes as $value => $label){
+              echo '<option value="'.esc_attr($value).'" '.selected($event_mode, $value, false).'>'.esc_html($label).'</option>';
+          }
+          ?>
+        </select>
       </p>
       <p><label>Tryb lineup’u</label>
         <select name="kif_lineup_mode" style="width:100%">
@@ -92,6 +109,7 @@ function kif_event_save($post_id){
     update_post_meta($post_id,'_kif_more_info', esc_url_raw($_POST['kif_more_info'] ?? ''));
     update_post_meta($post_id,'_kif_lineup', wp_kses_post($_POST['kif_lineup'] ?? ''));
     update_post_meta($post_id,'_kif_headliners', sanitize_text_field($_POST['kif_headliners'] ?? ''));
+    update_post_meta($post_id,'_kif_event_mode', sanitize_text_field($_POST['kif_event_mode'] ?? ''));
     update_post_meta($post_id,'_kif_lineup_mode', sanitize_text_field($_POST['kif_lineup_mode'] ?? 'full'));
     update_post_meta($post_id,'_kif_timetable', wp_kses_post($_POST['kif_timetable'] ?? ''));
 }
