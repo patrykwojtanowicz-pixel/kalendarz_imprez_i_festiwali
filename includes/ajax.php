@@ -33,6 +33,7 @@ function kif_get_event_details(){
         'lineup_mode'    => get_post_meta($id, '_kif_lineup_mode', true),
         'timetable_json' => get_post_meta($id, '_kif_timetable', true),
         'featured'       => (bool) get_post_meta($id, '_kif_featured', true),
+        'event_mode'     => get_post_meta($id, '_kif_event_mode', true),
         'types'          => $terms,
     ];
 
@@ -58,11 +59,3 @@ function kif_update_event_description(){
     $res = wp_update_post([
         'ID'           => $id,
         'post_content' => $html,
-    ], true);
-
-    if (is_wp_error($res))
-        wp_send_json_error($res->get_error_message());
-
-    wp_send_json_success(true);
-}
-add_action('wp_ajax_kif_update_event_description', 'kif_update_event_description');
