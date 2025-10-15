@@ -1,5 +1,4 @@
 (function($){
-  var STORAGE_KEY='kif_view_mode';
 
   // -----------------------------
   // Aktualizacja etykiety suwaka
@@ -25,27 +24,7 @@
       var cm=$card.data('month')||'',
           cc=$card.data('city')||'',
           cg=($card.data('genre')||'').toString(),
-          ct=($card.data('type')||'').toString(),
-          cp=parseInt($card.data('price')||'0',10);
-
-      if(m && String(cm)!==String(m)) return false;
-      if(c && String(cc)!==String(c)) return false;
-
-      if(g){
-        var gs=cg.split(/[,;]+/).map(function(s){return s.trim();});
-        if(gs.indexOf(g)===-1) return false;
-      }
-      if(t){
-        var ts=ct.split(/[,;]+/).map(function(s){return s.trim();});
-        if(ts.indexOf(t)===-1) return false;
-      }
-      if(cp>pmax) return false;
-
-      // Wyszukiwanie tekstowe
-      if(q){
-        var txt = (
-          ($card.data('title')||'')+' '+
-          ($card.data('city')||'')+' '+
+@@ -49,62 +48,50 @@
           ($card.data('venue')||'')+' '+
           ($card.data('genre')||'')
         ).toLowerCase();
@@ -69,18 +48,6 @@
       .length > 0;
 
     $root.find('.kif-featured').toggleClass('kif-hidden', !anyFeatVisible);
-  }
-
-  // -----------------------------
-  // Zmiana trybu widoku
-  // -----------------------------
-  function setMode($root, mode){
-    $root.removeClass('kif-show-prosty kif-show-rozszerzony')
-         .addClass(mode==='rozszerzony'?'kif-show-rozszerzony':'kif-show-prosty');
-    $root.find('.kif-view-btn')
-         .attr('aria-pressed','false')
-         .filter('[data-mode="'+mode+'"]').attr('aria-pressed','true');
-    try{ localStorage.setItem(STORAGE_KEY, mode); }catch(e){}
   }
 
   // -----------------------------
@@ -108,81 +75,7 @@
         txt.innerHTML = s;
         var decoded = txt.value;
         return $('<div>').text(decoded).html();
-      }
-
-      var titleEsc = esc(ev.title);
-      var whereEsc = esc(where);
-      var typesEsc = (ev.types&&ev.types.length)?(' | Typ: '+esc(ev.types[0])):'';
-
-      function tagsFromList(list, headsCsv){
-        var out='',heads=(headsCsv||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-        (list||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).forEach(function(n){
-          var isH = heads.indexOf(n.toLowerCase())>=0;
-          out += `<span class="kif-tag${isH?' headliner':''}">${isH?'<strong>':''}${esc(n)}${isH?'</strong>':''}</span>`;
-        });
-        return out || '<p class="kif-lineup-placeholder">Line-up zostanie podany wkrótce...</p>';
-      }
-      function fullHeadlinersSplit(list, headsCsv){
-        var all=(list||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-        var heads=(headsCsv||'').split(',').map(s=>s.trim()).filter(Boolean);
-        var headsLower=heads.map(h=>h.toLowerCase());
-        var rest=all.filter(n=>headsLower.indexOf(n.toLowerCase())<0);
-
-        var h1 = heads.length ? `<div class="kif-tags">${heads.map(h=>`<span class="kif-tag headliner"><strong>${esc(h)}</strong></span>`).join(' ')}</div>` : '';
-        var h2 = rest.length ? `<div class="kif-tags">${rest.map(r=>`<span class="kif-tag">${esc(r)}</span>`).join(' ')}</div>` : '';
-        return (h1||h2) ? (h1 + (h2 ? `<div style="margin-top:.35rem"></div>${h2}` : ''))
-                        : '<p class="kif-lineup-placeholder">Line-up zostanie podany wkrótce...</p>';
-      }
-
-      var lineupHtml='';
-      switch(ev.lineup_mode||'full'){
-        case 'full_headliners': lineupHtml=fullHeadlinersSplit(ev.lineup||'', ev.headliners||''); break;
-        case 'headliners_only': lineupHtml=fullHeadlinersSplit((ev.headliners||'').split(',').join('\n'), ev.headliners||''); break;
-        default: lineupHtml=tagsFromList(ev.lineup||'', ev.headliners||'');
-      }
-
-      var genresHtml = ((ev.genre||'').split(/[,;]+/).map(s=>s.trim()).filter(Boolean)
-                        .map(g=>`<span class="kif-tag">${esc(g)}</span>`).join(' '));
-
-      var modalHtml = `
-        <div class="kif-overlay" role="dialog" aria-modal="true">
-          <button class="kif-modal-close" aria-label="Zamknij">×</button>
-          <div class="kif-modal">
-            <header class="kif-modal-header">
-              <div>
-                <h2 class="kif-modal-title">${titleEsc}</h2>
-                <div class="kif-meta">${[whereEsc, date].filter(Boolean).join(' | ')}${typesEsc}</div>
-                ${genresHtml ? `<div class="kif-genres kif-genres-top">${genresHtml}</div>` : ``}
-              </div>
-              <div class="kif-price-box">
-                ${priceText ? `<div class="kif-price-amount">💳 ${esc(priceText)}</div>` : ``}
-                ${ev.ticket ? `<a class="kif-btn kif-buy" target="_blank" rel="noopener" href="${esc(ev.ticket)}">Kup bilet</a>` : ``}
-                ${ev.more_info && ev.more_info.trim() ? `<a class="kif-btn kif-more-info" target="_blank" rel="noopener" href="${esc(ev.more_info)}">Więcej informacji</a>` : ``}
-              </div>
-            </header>
-            <div class="kif-modal-body">
-              ${ev.thumb ? `<img class="kif-thumb" src="${esc(ev.thumb)}" alt="">` : ``}
-              ${lineupHtml ? `<div class="kif-lineup"><h3>Line-up</h3>${lineupHtml}</div>` : ``}
-              <div class="kif-description" contenteditable="true" data-id="${ev.id}">${ev.content||''}</div>
-              ${ev.custom_desc ? `<div class="kif-custom-desc"><h3>Dodatkowy opis</h3><p>${esc(ev.custom_desc)}</p></div>` : ``}
-            </div>
-            <div class="kif-modal-footer">
-              <button class="kif-btn kif-save" data-id="${ev.id}">💾 Zapisz opis</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      var $m = $(modalHtml);
-      $('body').append($m);
-
-      function close(){
-        $m.find('.kif-modal').css('animation','kifModalOut .2s ease-in forwards');
-        $m.css('animation','kifFadeOut .2s ease forwards');
-        setTimeout(function(){ $m.remove(); },200);
-      }
-      $m.on('click', function(e){ if(e.target===this) close(); });
-      $m.find('.kif-modal-close').on('click', close);
+@@ -186,56 +173,50 @@
       $(document).on('keydown.kifEsc', function(e){ if(e.key==='Escape'){ close(); $(document).off('keydown.kifEsc'); } });
 
       $m.on('click','.kif-save',function(){
@@ -208,12 +101,6 @@
     $root.find('.kif-range-max').attr({max:pmax, step:step}).val(pmax);
     updatePriceLabel($root);
 
-    var defaultMode=$root.data('default-mode')||'prosty', saved=null;
-    try{ saved=localStorage.getItem(STORAGE_KEY);}catch(e){}
-    var mode=saved||defaultMode||'prosty';
-    setMode($root, mode);
-
-    $root.on('click','.kif-view-btn', function(){ setMode($root, $(this).data('mode')); });
     $root.on('change input', '.kif-filter-month,.kif-filter-city,.kif-filter-genre,.kif-filter-type,.kif-range-max', function(){
       updatePriceLabel($root);
       applyFilters($root);
@@ -239,7 +126,3 @@
 
     applyFilters($root);
   }
-
-  $(function(){ $('.kif-cal').each(function(){ init($(this)); }); });
-
-})(jQuery);
