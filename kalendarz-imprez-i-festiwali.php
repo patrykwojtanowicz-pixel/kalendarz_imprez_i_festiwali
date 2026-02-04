@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Kalendarz imprez i festiwali
-Description: Zaawansowany kalendarz wydarzeń muzycznych: typy imprez (Klub/Hala/Festiwal), panel ustawień z podglądem, pojedynczy suwak ceny, headlinerzy (max 3 + „i nie tylko”), modal ze szczegółami i socialami (oficjalne logotypy). Styl zgodny z Newsblock.
-Version: 1.2
+Description: Zaawansowany kalendarz wydarzeń muzycznych.
+Version: 1.0
 Author: Shining Beats
 Text Domain: kalendarz-imprez-i-festiwali
 */
