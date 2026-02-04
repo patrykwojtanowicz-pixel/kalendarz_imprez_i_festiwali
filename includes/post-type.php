@@ -39,3 +39,45 @@ add_action('manage_festival_event_posts_custom_column', function($col,$post_id){
 add_action('admin_head', function(){
     echo '<style>.column-thumbnail{width:90px;text-align:center}</style>';
 });
+
+// === DODATKOWE KOLUMNY W WIDOKU WP-ADMIN ===
+add_filter('manage_festival_event_posts_columns', function($columns){
+    // Wstaw nowe kolumny po tytule
+    $new = [];
+    foreach($columns as $key => $label){
+        $new[$key] = $label;
+        if($key === 'title'){
+            $new['kif_date'] = '📅 Data imprezy';
+            $new['kif_featured'] = '💎 Polecane';
+        }
+    }
+    return $new;
+});
+
+// === WYPEŁNIENIE DANYCH W KOLUMNACH ===
+add_action('manage_festival_event_posts_custom_column', function($column, $post_id){
+    if($column === 'kif_date'){
+        $date = get_post_meta($post_id, '_kif_date', true);
+        echo $date ? esc_html(date_i18n('d.m.Y H:i', strtotime($date))) : '—';
+    }
+    if($column === 'kif_featured'){
+        $feat = get_post_meta($post_id, '_kif_featured', true);
+        echo $feat ? '<span style="color:#f39c12;font-weight:bold;">✔️ Tak</span>' : '—';
+    }
+}, 10, 2);
+
+// === SORTOWANIE PO DACIE IMPREZY ===
+add_filter('manage_edit-festival_event_sortable_columns', function($columns){
+    $columns['kif_date'] = 'kif_date';
+    return $columns;
+});
+
+add_action('pre_get_posts', function($query){
+    if(!is_admin() || !$query->is_main_query()) return;
+    if($orderby = $query->get('orderby')){
+        if($orderby === 'kif_date'){
+            $query->set('meta_key', '_kif_date');
+            $query->set('orderby', 'meta_value');
+        }
+    }
+});
