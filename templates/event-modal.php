@@ -126,7 +126,7 @@ if (!empty($types_arr)) $meta_line[] = 'Typ: ' . $types_arr[0];
       $has_heads = !empty(trim($headliners));
       ?>
       <div class="kif-lineup">
-        <h3>Line-up</h3>
+        <h3>Lineup</h3>
 
         <?php if ($has_heads): ?>
           <div class="kif-tags">
@@ -143,7 +143,7 @@ if (!empty($types_arr)) $meta_line[] = 'Typ: ' . $types_arr[0];
             <?php endforeach; ?>
           </div>
         <?php elseif (!$has_heads): ?>
-          <p class="kif-lineup-placeholder">Line-up zostanie podany wkrótce...</p>
+          <p class="kif-lineup-placeholder">Lineup zostanie podany wkrótce...</p>
         <?php endif; ?>
       </div>
 
