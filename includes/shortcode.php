@@ -2,20 +2,31 @@
 if (!defined('ABSPATH')) exit;
 
 function kif_calendar_shortcode($atts){
-    $atts = shortcode_atts([], $atts, 'festival_calendar');
+    $atts = shortcode_atts(['mode'=>'rozszerzony'], $atts, 'festival_calendar');
     $settings = kif_get_settings();
 
     $events = get_posts([
-        'post_type'=>'festival_event',
-        'post_status'=>'publish',
-        'numberposts'=>-1,
-        'meta_key'=>'_kif_date',
-        'orderby'=>'meta_value',
-        'order'=>'ASC'
+        'post_type'   => 'festival_event',
+        'post_status' => 'publish',
+        'numberposts' => -1,
+        'meta_key'    => '_kif_date',
+        'orderby'     => 'meta_value',
+        'order'       => 'ASC'
     ]);
 
     $months = $cities = $venues = $genres = $types = [];
     $max_price = 0;
+
+    // 📅 DZISIEJSZA DATA (granica do filtrowania)
+    $today_cutoff = date('Y-m-d 00:00:00', strtotime('tomorrow'));
+
+    // 🔍 PRZEFILTRUJ WYDARZENIA – tylko przyszłe i bieżące (uwzględniając datę zakończenia)
+    $events = array_filter($events, function($p) use ($today_cutoff){
+        $start = get_post_meta($p->ID, '_kif_date', true);
+        $end   = get_post_meta($p->ID, '_kif_date_end', true) ?: $start;
+        if(!$start) return false;
+        return strtotime($end) >= strtotime($today_cutoff) - 86400; // do końca dnia
+    });
 
     foreach($events as $p){
         $d = get_post_meta($p->ID, '_kif_date', true);
@@ -28,7 +39,9 @@ function kif_calendar_shortcode($atts){
         if($price > $max_price) $max_price = $price;
 
         $c = get_post_meta($p->ID, '_kif_city', true);
-@@ -34,63 +34,57 @@ function kif_calendar_shortcode($atts){
+        if($c) $cities[$c] = true;
+
+        $v = get_post_meta($p->ID, '_kif_venue', true);
         if($v) $venues[$v] = true;
 
         $g = get_post_meta($p->ID, '_kif_genre', true);
@@ -54,7 +67,8 @@ function kif_calendar_shortcode($atts){
     }
 
     ob_start(); ?>
-    <div class="kif-cal"
+    <div class="kif-cal kif-mode-rozszerzony"
+         data-default-mode="rozszerzony"
          data-price-max="<?php echo esc_attr($max_price); ?>"
          data-step="<?php echo esc_attr(intval($settings['price_step'])); ?>"
          data-grid="<?php echo esc_attr($settings['grid_columns']); ?>">
@@ -64,7 +78,7 @@ function kif_calendar_shortcode($atts){
         <div class="kif-filters">
           <div class="kif-filter kif-search-text">
             <label for="kif-search">Szukaj wydarzenia</label>
-            <input type="text" id="kif-search" class="kif-search-input" placeholder="Wpisz nazwę lub artystę..." />
+            <input type="text" id="kif-search" class="kif-search-input" placeholder="Wpisz nazwę" />
           </div>
 
           <div class="kif-filter"><label>Miesiąc</label>
@@ -86,7 +100,15 @@ function kif_calendar_shortcode($atts){
               <option value="">Wszystkie</option>
               <?php foreach(array_keys($genres) as $g){ echo '<option value="'.esc_attr($g).'">'.esc_html($g).'</option>'; } ?>
             </select>
-@@ -113,188 +107,154 @@ function kif_calendar_shortcode($atts){
+          </div>
+
+          <div class="kif-filter kif-filter-price">
+            <label>Cena biletu</label>
+            <div class="kif-price-label">Pokaż imprezy kosztujące do <?php echo esc_html($max_price); ?> PLN</div>
+            <div class="kif-price-slider">
+              <input type="range" class="kif-range-max"
+                     min="0"
+                     max="<?php echo esc_attr($max_price); ?>"
                      step="<?php echo esc_attr(intval($settings['price_step'])); ?>"
                      value="<?php echo esc_attr($max_price); ?>">
             </div>
@@ -104,6 +126,7 @@ function kif_calendar_shortcode($atts){
             <?php foreach($featured_ids as $id):
               $title = get_the_title($id);
               $date  = get_post_meta($id, '_kif_date', true);
+              $date_end = get_post_meta($id, '_kif_date_end', true);
               $mkey  = $date ? date_i18n('Y-m', strtotime($date)) : 'inne';
               $city  = get_post_meta($id, '_kif_city', true);
               $venue = get_post_meta($id, '_kif_venue', true);
@@ -112,7 +135,21 @@ function kif_calendar_shortcode($atts){
               $genre_raw = get_post_meta($id, '_kif_genre', true);
               $thumb = get_the_post_thumbnail_url($id, 'medium_large');
               $types_arr = wp_get_post_terms($id, 'event_type', ['fields'=>'names']);
-              $artists = kif_get_display_artists($id);
+
+              // 🆕 Status sprzedaży / płatności
+              $on_sale     = get_post_meta($id, '_kif_on_sale', true) ?: 'tak';
+              $sale_reason = get_post_meta($id, '_kif_sale_reason', true);
+              $is_paid     = get_post_meta($id, '_kif_is_paid', true) ?: 'tak';
+
+              // --- HEADLINERZY vs LINEUP (etykieta) ---
+              $headliners_raw  = (string) get_post_meta($id, '_kif_headliners', true);
+              $headliners_arr  = array_filter(array_map('trim', explode(',', $headliners_raw)));
+              $has_headliners  = count($headliners_arr) > 0;
+              $heads_more = 0;
+              $heads = $has_headliners ? kif_headliners_array($id, 3, $heads_more) : [];
+
+              $lineup_raw = (string) get_post_meta($id, '_kif_lineup', true);
+              $lineup_artists = array_filter(array_map('trim', explode("\n", $lineup_raw)));
             ?>
               <article class="kif-card kif-event-card kif-featured-card"
                        data-featured="1"
@@ -131,27 +168,58 @@ function kif_calendar_shortcode($atts){
 
                 <div class="kif-card-body">
                   <h4 class="kif-card-title"><?php echo esc_html($title); ?></h4>
-                  <?php if(!empty($artists['items'])): ?>
+
+                  <?php if($has_headliners): ?>
                     <div class="kif-headliners-row">
-                      <span class="kif-headliners-label"><?php echo esc_html($artists['label']); ?></span>
+                      <span class="kif-headliners-label">Headlinerzy:</span>
+                      <div class="kif-tags">
+                        <?php foreach($heads as $hn){ echo '<span class="kif-tag headliner">'.esc_html($hn).'</span>'; } ?>
+                        <?php if($heads_more>0){ echo '<span class="kif-headliners-more"> i nie tylko</span>'; } ?>
+                      </div>
+                    </div>
+                  <?php elseif(!empty($lineup_artists)): ?>
+                    <div class="kif-headliners-row">
+                      <span class="kif-headliners-label">Wystąpią:</span>
                       <div class="kif-tags">
                         <?php
-                        foreach($artists['items'] as $name){
-                            $classes = 'kif-tag'.($artists['highlight']?' headliner':'');
-                            echo '<span class="'.esc_attr($classes).'">'.esc_html($name).'</span>';
-                        }
-                        if(!empty($artists['more'])){
-                            echo '<span class="kif-headliners-more"> i nie tylko</span>';
-                        }
+                          $preview = array_slice($lineup_artists, 0, 3);
+                          foreach($preview as $artist){ echo '<span class="kif-tag">'.esc_html($artist).'</span>'; }
+                          if(count($lineup_artists) > 3){ echo '<span class="kif-headliners-more"> i nie tylko</span>'; }
                         ?>
                       </div>
                     </div>
                   <?php endif; ?>
+
                   <div class="kif-card-meta">
-                    <div><?php echo esc_html(kif_fmt_dt($date)); ?></div>
+                    <?php
+                    // 🟢 WSTĘP FREE ma pierwszeństwo nad statusami sprzedaży
+                    if($is_paid === 'nie'){
+                        echo '<div><span class="kif-badge-sale kif-badge-free">WSTĘP FREE</span></div>';
+                    } elseif($on_sale === 'nie'){
+                        if($sale_reason === 'sprzedaz_nie_ruszyla'){
+                            echo '<div><span class="kif-badge-sale kif-badge-upcoming">SPRZEDAŻ WKRÓTCE</span></div>';
+                        } elseif($sale_reason === 'wyprzedane'){
+                            echo '<div><span class="kif-badge-sale kif-badge-soldout">SOLD OUT</span></div>';
+                        }
+                    }
+                    ?>
+
+                    <div>
+                      <?php
+                      if($date_end && $date_end !== $date){
+                        echo esc_html(kif_fmt_dt($date)) . ' – ' . esc_html(kif_fmt_dt($date_end));
+                      } else {
+                        echo esc_html(kif_fmt_dt($date));
+                      }
+                      ?>
+                    </div>
                     <div><?php echo esc_html(trim(($venue?$venue:'').(($venue&&$city)?', ':'').($city?$city:''))); ?></div>
                     <div class="kif-type"><?php echo !empty($types_arr)?('Typ: '.esc_html($types_arr[0])):''; ?></div>
-                    <?php if($price_raw!==''): ?><div>Cena biletu: <?php echo esc_html($price_raw); ?> PLN</div><?php endif; ?>
+
+                    <?php if($on_sale === 'tak' && $is_paid === 'tak' && $price_raw!==''): ?>
+                      <div>Cena biletu: <?php echo esc_html($price_raw); ?> PLN</div>
+                    <?php endif; ?>
+
                     <?php
                     $genre_tags = array_filter(array_map('trim', preg_split('/[,;]+/', (string)$genre_raw)));
                     if($genre_tags){
@@ -169,13 +237,14 @@ function kif_calendar_shortcode($atts){
       <?php endif; ?>
 
       <!-- ===== WYDARZENIA MIESIĘCZNE ===== -->
-      <div class="kif-months">
+      <div class="kif-months kif-view-rozszerzony">
         <?php
         $cur='';
         foreach($events as $p){
             $id = $p->ID;
             $title = get_the_title($id);
             $date = get_post_meta($id,'_kif_date',true);
+            $date_end = get_post_meta($id,'_kif_date_end',true);
             $mkey = $date ? date_i18n('Y-m', strtotime($date)) : 'inne';
             $mlabel = $date ? date_i18n('F Y', strtotime($date)) : 'Inne';
 
@@ -194,7 +263,22 @@ function kif_calendar_shortcode($atts){
             $genre_raw = get_post_meta($id,'_kif_genre',true);
             $thumb = get_the_post_thumbnail_url($id,'medium_large');
             $types_arr = wp_get_post_terms($id,'event_type',['fields'=>'names']);
-            $artists = kif_get_display_artists($id);
+
+            // 🆕 Status sprzedaży / płatności
+            $on_sale     = get_post_meta($id, '_kif_on_sale', true) ?: 'tak';
+            $sale_reason = get_post_meta($id, '_kif_sale_reason', true);
+            $is_paid     = get_post_meta($id, '_kif_is_paid', true) ?: 'tak';
+
+            // --- HEADLINERZY vs LINEUP (etykieta) ---
+            $headliners_raw  = (string) get_post_meta($id, '_kif_headliners', true);
+            $headliners_arr  = array_filter(array_map('trim', explode(',', $headliners_raw)));
+            $has_headliners  = count($headliners_arr) > 0;
+            $heads_more = 0;
+            $heads = $has_headliners ? kif_headliners_array($id, 3, $heads_more) : [];
+
+            $lineup_raw = (string) get_post_meta($id, '_kif_lineup', true);
+            $lineup_artists = array_filter(array_map('trim', explode("\n", $lineup_raw)));
+
             $genre_tags = array_filter(array_map('trim', preg_split('/[,;]+/', (string)$genre_raw)));
 
             echo '<article class="kif-event-card"
@@ -209,22 +293,48 @@ function kif_calendar_shortcode($atts){
 
             if($thumb) echo '<div class="kif-card-thumb"><img src="'.esc_url($thumb).'" alt="'.esc_attr($title).'"></div>';
             echo '<div class="kif-card-body"><h4 class="kif-card-title">'.esc_html($title).'</h4>';
-            if(!empty($artists['items'])){
-                echo '<div class="kif-headliners-row"><span class="kif-headliners-label">'.esc_html($artists['label']).'</span><div class="kif-tags">';
-                foreach($artists['items'] as $name){
-                    $classes = 'kif-tag'.($artists['highlight']?' headliner':'');
-                    echo '<span class="'.esc_attr($classes).'">'.esc_html($name).'</span>';
-                }
-                if(!empty($artists['more'])){
-                    echo '<span class="kif-headliners-more"> i nie tylko</span>';
-                }
-                echo '</div></div>';
+
+            if($has_headliners){
+              echo '<div class="kif-headliners-row"><span class="kif-headliners-label">Headlinerzy:</span><div class="kif-tags">';
+              foreach($heads as $hn){ echo '<span class="kif-tag headliner">'.esc_html($hn).'</span>'; }
+              if($heads_more>0){ echo '<span class="kif-headliners-more"> i nie tylko</span>'; }
+              echo '</div></div>';
+            } elseif(!empty($lineup_artists)){
+              echo '<div class="kif-headliners-row"><span class="kif-headliners-label">Wystąpią:</span><div class="kif-tags">';
+              $preview = array_slice($lineup_artists, 0, 3);
+              foreach($preview as $artist){ echo '<span class="kif-tag">'.esc_html($artist).'</span>'; }
+              if(count($lineup_artists) > 3){ echo '<span class="kif-headliners-more"> i nie tylko</span>'; }
+              echo '</div></div>';
             }
 
-            echo '<div class="kif-card-meta"><div>'.esc_html(kif_fmt_dt($date)).'</div>';
+            echo '<div class="kif-card-meta">';
+
+            // 🟢 WSTĘP FREE ma pierwszeństwo
+            if($is_paid === 'nie'){
+                echo '<div><span class="kif-badge-sale kif-badge-free">WSTĘP FREE</span></div>';
+            } elseif($on_sale === 'nie'){
+                if($sale_reason === 'sprzedaz_nie_ruszyla'){
+                    echo '<div><span class="kif-badge-sale kif-badge-upcoming">SPRZEDAŻ WKRÓTCE</span></div>';
+                } elseif($sale_reason === 'wyprzedane'){
+                    echo '<div><span class="kif-badge-sale kif-badge-soldout">SOLD OUT</span></div>';
+                }
+            }
+
+            echo '<div>';
+            if($date_end && $date_end !== $date){
+              echo esc_html(kif_fmt_dt($date)) . ' – ' . esc_html(kif_fmt_dt($date_end));
+            } else {
+              echo esc_html(kif_fmt_dt($date));
+            }
+            echo '</div>';
+
             $place = trim(($venue?$venue:'').(($venue&&$city)?', ':'').($city?$city:'')); if($place) echo '<div>'.esc_html($place).'</div>';
             echo '<div class="kif-type">'.(!empty($types_arr)?('Typ: '.esc_html($types_arr[0])):'').'</div>';
-            if($price_raw!=='') echo '<div> Cena biletu: '.esc_html($price_raw).' PLN</div>';
+
+            if($on_sale === 'tak' && $is_paid === 'tak' && $price_raw!==''){
+                echo '<div> Cena biletu: '.esc_html($price_raw).' PLN</div>';
+            }
+
             if($genre_tags){
                 echo '<div class="kif-tags">';
                 foreach($genre_tags as $tg){ echo '<span class="kif-tag">'.esc_html($tg).'</span>'; }
@@ -235,4 +345,8 @@ function kif_calendar_shortcode($atts){
         if($cur!=='') echo '</div></section>';
         ?>
       </div>
-
+    </div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('festival_calendar','kif_calendar_shortcode');
