@@ -1,27 +1,79 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-function kif_fmt_dt($iso){
-    if(empty($iso)) return '';
-    $t = strtotime($iso); if(!$t) return esc_html($iso);
-    return date_i18n('d.m.Y, H:i', $t);
+/**
+ * AJAX: Pobiera dane szczegółowe wydarzenia (do modala)
+ */
+function kif_get_event_details(){
+    check_ajax_referer('kif_nonce','nonce');
+
+    $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    if(!$id) wp_send_json_error('Brak ID');
+    $p = get_post($id);
+    if(!$p || $p->post_type !== 'festival_event') wp_send_json_error('Nie znaleziono');
+
+    $terms = wp_get_post_terms($id, 'event_type', ['fields' => 'names']);
+
+    // 🔹 Pobranie wszystkich metadanych
+    $data = [
+        'id'             => $id,
+        'title'          => get_the_title($id),
+        'date'           => get_post_meta($id, '_kif_date', true),
+        'date_end'       => get_post_meta($id, '_kif_date_end', true),
+        'location'       => get_post_meta($id, '_kif_venue', true),
+        'city'           => get_post_meta($id, '_kif_city', true),
+        'price'          => get_post_meta($id, '_kif_price', true),
+        'genre'          => get_post_meta($id, '_kif_genre', true),
+        'thumb'          => get_the_post_thumbnail_url($id, 'large'),
+        'ticket'         => get_post_meta($id, '_kif_ticket', true),
+        'more_info'      => get_post_meta($id, '_kif_more_info', true),
+        'content'        => apply_filters('the_content', get_post_field('post_content', $id)),
+        'custom_desc'    => get_post_meta($id, '_kif_custom_desc', true),
+        'permalink'      => get_permalink($id),
+        'lineup'         => html_entity_decode(get_post_meta($id, '_kif_lineup', true), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+        'headliners'     => html_entity_decode(get_post_meta($id, '_kif_headliners', true), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+        'lineup_mode'    => get_post_meta($id, '_kif_lineup_mode', true),
+        'timetable_json' => get_post_meta($id, '_kif_timetable', true),
+
+        // 🔹 Statusy sprzedaży i płatności
+        'on_sale'        => get_post_meta($id, '_kif_on_sale', true) ?: 'tak',
+        'sale_reason'    => get_post_meta($id, '_kif_sale_reason', true),
+        'is_paid'        => get_post_meta($id, '_kif_is_paid', true) ?: 'tak',
+
+        // 🔹 Nowe pole – Polecane przez redakcję
+        'featured'       => (bool) get_post_meta($id, '_kif_featured', true),
+
+        // 🔹 Typy wydarzeń
+        'types'          => $terms,
+    ];
+
+    wp_send_json_success($data);
 }
-function kif_price_to_int($raw){
-    if(preg_match('/(\d+)/',(string)$raw,$m)) return intval($m[1],10);
-    return 0;
+add_action('wp_ajax_kif_get_event_details', 'kif_get_event_details');
+add_action('wp_ajax_nopriv_kif_get_event_details', 'kif_get_event_details');
+
+/**
+ * AJAX: Aktualizacja opisu wydarzenia (edycja treści w modalu)
+ */
+function kif_update_event_description(){
+    check_ajax_referer('kif_nonce', 'nonce');
+
+    if (!current_user_can('edit_posts'))
+        wp_send_json_error('Brak uprawnień');
+
+    $id = intval($_POST['id'] ?? 0);
+    $html = wp_kses_post($_POST['html'] ?? '');
+
+    if (!$id) wp_send_json_error('Brak ID');
+
+    $res = wp_update_post([
+        'ID'           => $id,
+        'post_content' => $html,
+    ], true);
+
+    if (is_wp_error($res))
+        wp_send_json_error($res->get_error_message());
+
+    wp_send_json_success(true);
 }
-/** Zwraca do 3 headlinerów i liczbę „more” (ilu więcej jest) */
-function kif_headliners_array($post_id, $limit=3, &$more=0){
-    $headsCsv = (string)get_post_meta($post_id,'_kif_headliners',true);
-    $heads = array_filter(array_map('trim', explode(',', $headsCsv)));
-    if(empty($heads)){
-        $lines = preg_split('/\r?\n/', (string)get_post_meta($post_id,'_kif_lineup',true));
-        $heads = array_filter(array_map('trim',$lines));
-    }
-    $more = max(0, count($heads) - $limit);
-    return array_slice($heads, 0, $limit);
-}
-function kif_get_settings(){
-    $defaults = ['accent_color'=>'#ff7a1c','price_step'=>10,'grid_columns'=>'auto','dark_mode'=>1];
-    return wp_parse_args(get_option('kif_settings', []), $defaults);
-}
+add_action('wp_ajax_kif_update_event_description', 'kif_update_event_description');
