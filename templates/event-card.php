@@ -20,7 +20,7 @@ $thumb       = get_the_post_thumbnail_url($event_id, 'medium');
 $lineup      = get_post_meta($event_id, '_kif_lineup', true);
 $headliners  = get_post_meta($event_id, '_kif_headliners', true);
 $featured    = get_post_meta($event_id, '_kif_featured', true);
-$types_arr   = wp_get_post_terms($event_id, 'event_type', ['fields' => 'names']);
+$category    = get_post_meta($event_id, '_kif_category', true);
 $price_num   = is_numeric($price_raw) ? floatval($price_raw) : 0;
 
 $headliner_list = array_filter(array_map('trim', explode(',', $headliners)));
@@ -35,7 +35,7 @@ $genres = array_filter(array_map('trim', explode(',', $genre_raw)));
   data-city="<?php echo esc_attr($city); ?>"
   data-venue="<?php echo esc_attr($venue); ?>"
   data-genre="<?php echo esc_attr(implode(',', $genres)); ?>"
-  data-type="<?php echo esc_attr(implode(',', $types_arr)); ?>"
+  data-type="<?php echo esc_attr($category); ?>"
   data-price="<?php echo esc_attr($price_num); ?>"
   data-month="<?php echo esc_attr(substr($date_iso, 0, 7)); ?>"
 >
@@ -58,9 +58,6 @@ $genres = array_filter(array_map('trim', explode(',', $genre_raw)));
       <?php endif; ?>
       <?php if ($date_iso): ?>
         <span class="kif-date"><?php echo date_i18n('d.m.Y, H:i', strtotime($date_iso)); ?></span>
-      <?php endif; ?>
-      <?php if (!empty($types_arr)): ?>
-        <span class="kif-type"><?php echo esc_html($types_arr[0]); ?></span>
       <?php endif; ?>
     </div>
 
