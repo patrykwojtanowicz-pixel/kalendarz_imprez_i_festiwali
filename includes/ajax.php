@@ -12,20 +12,21 @@ function kif_get_event_details(){
     $p = get_post($id);
     if(!$p || $p->post_type !== 'festival_event') wp_send_json_error('Nie znaleziono');
 
-    $terms = wp_get_post_terms($id, 'event_type', ['fields' => 'names']);
-
-    // 🔹 Pobranie wszystkich metadanych
     $data = [
         'id'             => $id,
         'title'          => get_the_title($id),
         'date'           => get_post_meta($id, '_kif_date', true),
         'date_end'       => get_post_meta($id, '_kif_date_end', true),
+        'time'           => get_post_meta($id, '_kif_time', true),
+        'cal_end_date'   => get_post_meta($id, '_kif_cal_end_date', true), // ✅ Dane dla kalendarza
+        'cal_end_time'   => get_post_meta($id, '_kif_cal_end_time', true), // ✅ Dane dla kalendarza
         'location'       => get_post_meta($id, '_kif_venue', true),
         'city'           => get_post_meta($id, '_kif_city', true),
         'price'          => get_post_meta($id, '_kif_price', true),
         'genre'          => get_post_meta($id, '_kif_genre', true),
         'thumb'          => get_the_post_thumbnail_url($id, 'large'),
         'ticket'         => get_post_meta($id, '_kif_ticket', true),
+        'alebilet'       => get_post_meta($id, '_kif_alebilet', true), 
         'more_info'      => get_post_meta($id, '_kif_more_info', true),
         'content'        => apply_filters('the_content', get_post_field('post_content', $id)),
         'custom_desc'    => get_post_meta($id, '_kif_custom_desc', true),
@@ -34,17 +35,11 @@ function kif_get_event_details(){
         'headliners'     => html_entity_decode(get_post_meta($id, '_kif_headliners', true), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
         'lineup_mode'    => get_post_meta($id, '_kif_lineup_mode', true),
         'timetable_json' => get_post_meta($id, '_kif_timetable', true),
-
-        // 🔹 Statusy sprzedaży i płatności
         'on_sale'        => get_post_meta($id, '_kif_on_sale', true) ?: 'tak',
         'sale_reason'    => get_post_meta($id, '_kif_sale_reason', true),
         'is_paid'        => get_post_meta($id, '_kif_is_paid', true) ?: 'tak',
-
-        // 🔹 Nowe pole – Polecane przez redakcję
         'featured'       => (bool) get_post_meta($id, '_kif_featured', true),
-
-        // 🔹 Typy wydarzeń
-        'types'          => $terms,
+        'types'          => [get_post_meta($id, '_kif_category', true)], 
     ];
 
     wp_send_json_success($data);
