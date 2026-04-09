@@ -25,3 +25,4 @@ function kif_get_settings(){
     $defaults = ['accent_color'=>'#ff7a1c','price_step'=>10,'grid_columns'=>'auto','dark_mode'=>1];
     return wp_parse_args(get_option('kif_settings', []), $defaults);
 }
+
