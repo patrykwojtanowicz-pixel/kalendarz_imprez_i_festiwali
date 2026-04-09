@@ -50,53 +50,57 @@
   height: 38px;
 }
 
-/* === SUWAK CENY === */
+/* === FILTR CENY (Od - Do) === */
 .kif-filter-price {
-  flex: 1.5 1 220px;
-  min-width: 200px;
+  flex: 1 1 240px; /* Trochę więcej miejsca na 2 inputy + tekst */
+  min-width: 220px;
 }
-.kif-price-slider {
+.kif-price-inputs {
   display: flex;
   align-items: center;
-  gap: .6rem;
+  gap: 8px; /* Równy odstęp między elementami */
   width: 100%;
+  flex-wrap: nowrap; /* Wymuszenie jednego rzędu */
 }
-.kif-price-label {
-  font-size: .9rem;
-  white-space: nowrap;
-  opacity: .9;
-  line-height: 1;
-}
-.kif-range-max {
-  flex: 1;
-  height: 6px;
-  accent-color: var(--fcp-accent,#ff7a1c);
+.kif-price-inputs input[type="number"] {
+  flex: 1; 
+  min-width: 0; 
+  width: 100%;
+  
+  /* IDEALNE DOPASOWANIE DO RESZTY FILTRÓW */
+  padding: .45rem .6rem; 
+  border: 1px solid rgba(0,0,0,.12); 
   border-radius: 8px;
-  cursor: pointer;
-  background: linear-gradient(to right,var(--fcp-accent,#ff7a1c) 0%,#ccc 100%);
+  background: #fff;
+  color: #333;
+  font-family: inherit;
+  font-size: 0.95rem;
+  height: 38px; /* Zmienione na równe 38px */
+  text-align: center;
+  box-sizing: border-box;
   outline: none;
-  transition: background .3s ease;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.kif-range-max:hover {
-  background: linear-gradient(to right,#ff973f 0%,#bbb 100%);
+.kif-price-inputs input[type="number"]:focus {
+  border-color: var(--fcp-accent, #ff7a1c);
+  box-shadow: 0 0 0 2px rgba(255, 122, 28, 0.15); /* Delikatna poświata przy kliknięciu (opcjonalnie) */
 }
-.kif-range-max::-webkit-slider-thumb {
+.kif-price-inputs span {
+  font-size: 0.9rem;
+  color: #555;
+  white-space: nowrap; /* Zapobiega przeniesieniu tekstu "PLN" lub myślnika do nowej linii */
+  font-weight: 500;
+}
+
+/* Ukrycie domyślnych strzałek w górę/dół z pól numerycznych */
+.kif-price-inputs input[type="number"]::-webkit-outer-spin-button,
+.kif-price-inputs input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--fcp-accent,#ff7a1c);
-  border: 2px solid #fff;
-  box-shadow: 0 0 4px rgba(0,0,0,0.25);
-  transition: transform .15s ease;
+  margin: 0;
 }
-.kif-range-max::-webkit-slider-thumb:active { transform: scale(1.1); }
-.kif-range-max::-moz-range-thumb {
-  width: 16px; height: 16px; border: none; border-radius: 50%;
-  background: var(--fcp-accent,#ff7a1c);
-  transition: transform .15s ease, background .2s ease;
+.kif-price-inputs input[type="number"] {
+  -moz-appearance: textfield;
 }
-.kif-range-max::-moz-range-thumb:active { transform: scale(1.1); }
 
 /* === FILTRY – DESKTOP === */
 @media (min-width: 992px) {
@@ -106,10 +110,8 @@
   }
   .kif-filter { flex: 1 1 160px; }
   .kif-filter-price {
-    flex: 1 1 260px;
-    order: 99;
+    flex: 0 1 260px;
   }
-  .kif-price-slider { flex-direction: row; align-items: center; }
 }
 
 /* === FILTRY – MOBILE === */
@@ -119,12 +121,11 @@
     flex: 1 1 45%;
     min-width: 180px;
   }
-  .kif-price-slider {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: .4rem;
+}
+@media (max-width: 600px) {
+  .kif-filter, .kif-filter-price {
+    flex: 1 1 100%;
   }
-  .kif-price-label { text-align: left; }
 }
 @media (max-width: 600px) {
   .kif-filter, .kif-filter-price {
@@ -371,4 +372,467 @@ $root.on('input change', '.kif-range-max', function(){
     align-items: flex-start;
     gap: .4rem;
   }
+}
+
+/* =========================================
+   === PRZYCISK ALEBILET ===
+========================================= */
+.kif-btn-alebilet {
+  background-color: #00a7e8 !important;
+  color: #ffffff !important;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  padding: 0.5rem 1rem; /* ⬅️ Zrównanie wysokości: zmiana z 0.6rem na 0.5rem */
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background-color 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box; /* Wymuszenie identycznego modelu pudełkowego */
+}
+
+.kif-btn-alebilet:hover {
+  background-color: #008fcc !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 167, 232, 0.4);
+}
+
+/* === Karty w widoku ogólnym (pod "Więcej informacji") === */
+.kif-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Odstęp między przyciskami */
+}
+
+.kif-card-actions .kif-expand, 
+.kif-card-actions .kif-btn-alebilet {
+  width: 100%;
+  margin-top: 0;
+  box-sizing: border-box;
+}
+
+/* === Układ w szczegółach wydarzenia (Modal) === */
+.kif-ticket-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* ⬅️ Zrównanie do prawej krawędzi w widoku Desktop */
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.kif-ticket-actions .kif-btn {
+  margin-top: 0; 
+  box-sizing: border-box;
+}
+
+/* Pogrubienie przycisku "Kup bilet", aby pasował stylem do Alebilet */
+.kif-btn.kif-buy {
+  font-weight: 600;
+}
+
+/* === Wersja Mobile (szczegóły wydarzenia - przyciski obok siebie) === */
+@media (max-width: 600px) {
+  .kif-ticket-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start; /* Na telefonie wyrównujemy do lewej (pod tekstem) */
+  }
+  .kif-ticket-actions > a.kif-btn,
+  .kif-ticket-actions > a.kif-btn-alebilet {
+    flex: 0 1 auto; /* Szerokość dopasowana do długości napisu */
+    min-width: 0;
+  }
+}
+
+/* =========================================
+   === SZYBKIE FILTRY CZASOWE (PIGUŁKI) ===
+========================================= */
+.kif-quick-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  margin-bottom: 1.2rem;
+}
+
+.kif-quick-btn {
+  background: #f0f0f0;
+  color: #444;
+  border: 1px solid transparent;
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px; /* Okrągłe pigułki */
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.1s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.kif-quick-btn:hover {
+  background: #e2e2e2;
+}
+
+.kif-quick-btn:active {
+  transform: scale(0.97);
+}
+
+/* Stan aktywny - np. kolor akcentu wtyczki */
+.kif-quick-btn.active {
+  background: var(--fcp-accent, #ff7a1c);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(255, 122, 28, 0.3);
+}
+
+/* Wersja mobilna: pozwalamy na przewijanie pigułek w poziomie zamiast zawijania, co jest często lepsze dla UX na telefonach */
+@media (max-width: 600px) {
+  .kif-quick-filters {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 5px; /* miejsce na ewentualny pasek przewijania */
+    -webkit-overflow-scrolling: touch; /* płynne scrollowanie na iOS */
+  }
+  
+  .kif-quick-filters::-webkit-scrollbar {
+    display: none; /* Ukrywa brzydki pasek scrolla */
+  }
+  
+  .kif-quick-btn {
+    white-space: nowrap; /* Zapobiega łamaniu tekstu w pigułkach */
+  }
+}
+
+/* =========================================
+   === ODLICZANIE CZASU (COUNTDOWN) ===
+========================================= */
+.kif-countdown {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  padding: 5px 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Wersja nałożona na zdjęcie (w kafelkach Polecamy) */
+.kif-countdown-thumb {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Wersja w kafelku bez zdjęcia (rzadki przypadek) */
+.kif-countdown-inline {
+  background: #333; 
+}
+
+/* Wersja w Modalu (obok tytułu) */
+.kif-countdown-modal {
+  background: #f0f0f0;
+  color: #333;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: none;
+}
+
+/* Wyróżnienie napisu, gdy impreza już trwa */
+.kif-countdown.kif-started {
+  background: rgba(39, 174, 96, 0.9); /* Ładna zieleń */
+  color: #fff;
+  border-color: rgba(39, 174, 96, 1);
+}
+
+/* Dostosowanie wersji "ruszyła" dla okna szczegółowego (Modala) */
+.kif-countdown-modal.kif-started {
+  background: #e8f8f5; /* Delikatne jasne tło */
+  color: #27ae60;
+  border: 1px solid #27ae60;
+}
+
+/* =========================================
+   === PRZYCISKI DODAWANIA DO KALENDARZA ===
+========================================= */
+.kif-calendar-export {
+  display: none; /* ⬅️ ZMIANA: Domyślnie ukrywamy tę sekcję (na desktopie) */
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.kif-calendar-export-label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.kif-calendar-export-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Secondary Button (delikatniejszy) */
+.kif-btn-sec {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  background-color: #f5f5f5;
+  color: #444;
+  border: 1px solid #ddd;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.kif-btn-sec:hover {
+  background-color: #e9e9e9;
+  color: #111;
+  border-color: #ccc;
+  transform: translateY(-1px);
+}
+
+/* Wersja Mobile - pokazujemy sekcję i dopasowujemy układ */
+@media (max-width: 768px) {
+  .kif-calendar-export {
+    display: flex; /* ⬅️ ZMIANA: Pokazujemy sekcję tylko na telefonach i małych tabletach */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 12px;
+  }
+}
+
+/* =========================================
+   === SINGLE POST VIEW (PODSTRONA WYDARZENIA) ===
+========================================= */
+.kif-single-wrapper {
+  max-width: 1000px; /* ⬅️ Szerszy kontener na desktopie */
+  margin: 60px auto; /* ⬅️ Więcej przestrzeni nad i pod oknem */
+  padding: 0 20px;
+}
+
+.kif-modal-single {
+  position: relative !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  overflow: visible !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08) !important; /* Ładniejszy, rozmyty cień */
+  margin: 0 !important;
+  padding: 3rem 4rem !important; /* ⬅️ Duży bufor białego tła wewnątrz na desktopie */
+  border-radius: 12px !important;
+  background-color: #ffffff !important;
+  box-sizing: border-box !important;
+}
+
+/* Wyłączamy krzyżyk zamykający na stronie pojedynczego wydarzenia */
+.kif-modal-single .kif-modal-close {
+  display: none !important;
+}
+
+/* === Wersja Mobile (Pełna szerokość ekranu) === */
+@media (max-width: 768px) {
+  .kif-single-wrapper {
+    margin: 0 auto; /* Usuwamy zewnętrzne marginesy */
+    padding: 0;     /* Usuwamy boczne odstępy */
+  }
+  
+  .kif-modal-single {
+    padding: 2rem 1.2rem !important; /* Zmniejszamy wewnętrzny bufor dla wygody czytania na tel. */
+    border-radius: 0 !important;     /* ⬅️ Brak zaokrągleń - tło dotyka krawędzi ekranu */
+    box-shadow: none !important;     /* Usuwamy cień na telefonie */
+    min-height: 100vh;               /* Gwarancja, że tło sięga co najmniej do dołu ekranu */
+  }
+}
+
+/* =========================================
+   === PRZYCISK POWROTU DO KALENDARZA ===
+========================================= */
+.kif-back-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.kif-back-link:hover {
+  color: var(--fcp-accent, #ff7a1c); /* Użyje głównego koloru kalendarza */
+  transform: translateX(-3px); /* Delikatne przesunięcie w lewo przy najechaniu */
+}
+
+/* =========================================
+   === ODSTĘP DLA BANERA REKLAMOWEGO ===
+========================================= */
+
+/* 1. Jeśli użyłeś ręcznego wstawiania (div z klasą kif-single-ad-banner) */
+.kif-single-ad-banner {
+  margin-top: 60px !important; /* ⬅️ Główny, duży bufor nad reklamą */
+  margin-bottom: 40px !important;
+  padding-top: 40px !important;
+  border-top: 1px solid #f0f0f0; /* Bardzo delikatna szara linia oddzielająca treść od reklamy */
+  text-align: center;
+}
+
+/* 2. Jeśli Ad Inserter dodaje reklamę automatycznie pod treścią */
+.kif-modal-single .kif-custom-desc,
+.kif-modal-single .kif-description {
+  margin-bottom: 60px !important; /* Zapewnia duży odstęp od wszystkiego, co wklei się poniżej */
+}
+
+/* Opcjonalnie: margines dla samej domyślnej klasy Ad Insertera w tym widoku */
+.kif-modal-single .code-block {
+  margin-top: 50px !important;
+}
+
+/* =========================================
+   === UJEDNOLICENIE WYGLĄDU FILTRÓW ===
+========================================= */
+.kif-filters .kif-filter select,
+.kif-filters .kif-filter input[type="text"],
+.kif-filters .kif-filter input[type="number"] {
+  padding: 8px 16px;
+  border-radius: 20px; /* Styl zaokrąglonej pigułki */
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+  color: #333;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  height: 36px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: all 0.2s ease;
+}
+
+/* Własny styl po kliknięciu/skupieniu */
+.kif-filters .kif-filter select:focus,
+.kif-filters .kif-filter input[type="text"]:focus,
+.kif-filters .kif-filter input[type="number"]:focus {
+  border-color: #ff7a1c;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 122, 28, 0.15);
+}
+
+.kif-price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kif-price-inputs input {
+  width: 80px;
+}
+
+/* =========================================
+   === SZYBKIE FILTRY: WIDOK MOBILE (2 RZĘDY) ===
+========================================= */
+@media (max-width: 768px) {
+  /* Nadpisujemy domyślny suwak, pozwalając przyciskom zawijać się do nowej linii */
+  .kif-quick-filters {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding-bottom: 0 !important; /* Usuwamy ewentualny margines na pasek scrolla */
+  }
+
+  /* Pierwsze 3 przyciski w rzędzie */
+  .kif-quick-btn {
+    flex: 1 1 calc(33.333% - 8px);
+    text-align: center;
+    padding: 8px 4px !important; /* Mniejszy padding, by zmieścić tekst */
+    font-size: 0.8rem !important;
+    white-space: normal !important; /* Zezwalamy na przełamanie długiego tekstu */
+    min-width: unset !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+  }
+
+  /* Ostatnie 2 przyciski ("W ten weekend", "W przyszłym tygodniu") w nowym rzędzie */
+  .kif-quick-btn:nth-last-child(1),
+  .kif-quick-btn:nth-last-child(2) {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+
+/* 1. Główny kontener - resetujemy go, bo w gridzie motyw może go psuć */
+.kif-list .kif-card-thumb,
+.kif-featured-list .kif-card-thumb,
+.kif-fb-ratio-container {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important; /* Ustawiamy auto, bo proporcje budujemy paddingiem */
+    overflow: hidden !important;
+    background: #000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+/* 2. Pancerne warstwy obrazków wewnątrz kontenera */
+.kif-fb-ratio-container img {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+}
+
+/* Warstwa spodnia: Blur tło (object-fit: cover) */
+.kif-fb-ratio-container img.kif-fb-bg-blur {
+    object-fit: cover !important;
+    filter: blur(15px) brightness(0.6) !important;
+    transform: scale(1.1) !important; /* Unikamy białych krawędzi */
+    z-index: 1 !important;
+}
+
+/* Warstwa wierzchnia: Wyśrodkowany plakat (object-fit: contain) */
+.kif-fb-ratio-container img.kif-fb-main-img {
+    object-fit: contain !important; /* Bez przycinania, na środku */
+    z-index: 2 !important;
+    background: transparent !important;
+}
+
+/* 3. Naprawa licznika odliczania */
+/* Musimy go wyciągnąć poza warstwy absolutne obrazków */
+.kif-countdown.kif-countdown-thumb {
+    position: absolute !important;
+    bottom: 15px !important; /* Pozycja od dołu */
+    left: 15px !important; /* Pozycja od lewej */
+    z-index: 10 !important; /* Nad wszystkimi obrazkami */
+    display: inline-flex !important; /* Resetujemy layout licznika */
+    width: auto !important; /* Wymuszamy naturalną szerokość */
+    height: auto !important; /* Wymuszamy naturalną wysokość */
 }
