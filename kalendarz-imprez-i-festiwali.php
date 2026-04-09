@@ -14,6 +14,7 @@ require_once KIF_DIR.'includes/helpers.php';
 require_once KIF_DIR.'includes/ajax.php';
 require_once KIF_DIR.'includes/shortcode.php';
 require_once KIF_DIR.'admin/settings-page.php';
+require_once KIF_DIR.'includes/rest-api.php';
 
 function kif_enqueue_assets(){
     $settings = get_option('kif_settings', ['accent_color'=>'#ff7a1c','price_step'=>10,'grid_columns'=>'auto','dark_mode'=>1]);
