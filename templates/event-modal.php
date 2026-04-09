@@ -1,11 +1,6 @@
 <?php
 /**
  * Template: Event Modal
- * Finalna wersja:
- * - tagi gatunków pod metą
- * - znak "&" poprawnie renderowany
- * - komunikat o braku lineup'u
- * - przycisk "Więcej informacji" (jeśli istnieje link)
  */
 
 if (!defined('ABSPATH')) exit;
@@ -29,10 +24,10 @@ $venue      = get_post_meta($event_id, '_kif_venue', true);
 $price      = get_post_meta($event_id, '_kif_price', true);
 $genre      = get_post_meta($event_id, '_kif_genre', true);
 $ticket     = get_post_meta($event_id, '_kif_ticket', true);
-$more_info  = get_post_meta($event_id, '_kif_more_info', true); // ✅ poprawny meta key
+$more_info  = get_post_meta($event_id, '_kif_more_info', true); 
 $thumb      = get_the_post_thumbnail_url($event_id, 'large');
 $content    = apply_filters('the_content', get_post_field('post_content', $event_id));
-$types_arr  = wp_get_post_terms($event_id, 'event_type', ['fields' => 'names']);
+$category   = get_post_meta($event_id, '_kif_category', true); // ✅ Nowe pole kategorii
 $headliners = get_post_meta($event_id, '_kif_headliners', true);
 $lineup     = get_post_meta($event_id, '_kif_lineup', true);
 
@@ -41,7 +36,7 @@ $meta_line = [];
 if ($venue) $meta_line[] = $venue;
 if ($city)  $meta_line[] = $city;
 if ($date)  $meta_line[] = date_i18n('d.m.Y, H:i', strtotime($date));
-if (!empty($types_arr)) $meta_line[] = 'Typ: ' . $types_arr[0];
+if ($category) $meta_line[] = 'Kategoria: ' . $category; // ✅
 ?>
 
 <style>
@@ -108,7 +103,7 @@ if (!empty($types_arr)) $meta_line[] = 'Typ: ' . $types_arr[0];
           </a>
         <?php endif; ?>
 
-        <?php if (!empty($more_info)): // ✅ pojawia się tylko, gdy link istnieje ?>
+        <?php if (!empty($more_info)): ?>
           <a class="kif-btn kif-more-info" target="_blank" rel="noopener" href="<?php echo esc_url($more_info); ?>">
             Więcej informacji
           </a>
